@@ -1,0 +1,79 @@
+@startuml
+Links are colored in gray
+
+<style>
+
+ganttDiagram {
+    FontName Roboto
+    LineColor lavender
+    BackGroundColor lightblue
+
+    task {
+        FontName Roboto
+        FontColor Black
+        FontSize 12
+        BackGroundColor lightblue
+        LineColor lavender
+    }
+    milestone {
+        FontColor black
+        FontSize 14
+        FontStyle italic
+        FontStyle bold
+        BackGroundColor darkblue
+        LineColor darkblue
+    }
+    note {
+        FontColor black
+        FontSize 12
+        FontStyle italic
+        BackGroundColor white
+        LineColor white
+    }
+}
+
+</style>
+
+scale 1
+printscale weekly
+Project starts 2020-11-1
+
+
+[LGT] starts 2020-11-1 and ends 2021-06-30 and is colored in DarkBlue
+note bottom
+    <img:https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/LGT_Logo.svg/80px-LGT_Logo.svg.png>
+    * JMS issue
+    * AML
+    * Continuous monitoring
+    * CLM integration
+end note
+[Faster communication with ActiveMQ on SSL] starts 2020-12-21 and ends 2021-01-04
+then [Release 18.2.3.4] happens 2021-01-04
+
+[Bank of Singapore] starts 2020-11-1 and ends 2021-06-30 and is colored in DarkBlue
+note bottom
+    <img:https://upload.wikimedia.org/wikipedia/en/thumb/4/41/Bank_of_Singapore_Logo.svg/120px-Bank_of_Singapore_Logo.svg.png>
+    * Slow dossier creation for big docs
+    * Crash because of dossier creation
+end note
+[Release 15.9.20.9] happens 2021-01-20
+
+
+--
+
+[Prototype design] lasts 130 days and is colored in lightblue
+[Prototype design] is 30% completed
+
+'[TASK1] is colored in Lavender/LightBlue
+[Testing]  starts 20 days after [Prototype design]'s start and lasts 10 days
+[Testing]  is colored in pink  and is 56% completed
+then [New Testing] lasts 78 days
+[Prototype completed] happens 5 days after [Testing]'s end and is colored in darkblue
+[Roll-out] happens 10 days after [Prototype design]'s end
+[Prototype completed]->[Roll-out]
+
+[P_start] happens 2021-07-03
+[P_end] happens 2021-07-13
+[New design] occurs from [P_start] to [P_end]
+
+@enduml

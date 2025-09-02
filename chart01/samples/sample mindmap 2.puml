@@ -1,0 +1,27 @@
+@startmindmap
+left to right direction
+scale 100 width
+
+* Hashing
+**:One way
+
+<code>
+template <typename T>
+class cname{
+void f1()<U+003B>
+...
+}
+</code>;
+
+**: Deterministic
+
+<b>New way</b>
+;
+
+** Fixed size
+
+** Pseudo random
+
+
+
+@endmindmap

@@ -1,0 +1,100 @@
+@startuml
+left to right direction
+scale 500 width
+
+skinparam rectangle {
+    roundCorner<<Concept>> 25
+}
+
+title Sample deployment diagram
+
+!define osaPuml https://raw.githubusercontent.com/Crashedmind/PlantUML-opensecurityarchitecture2-icons/master
+!include osaPuml/Common.puml
+!include osaPuml/User/all.puml
+!include osaPuml/Hardware/all.puml
+!include osaPuml/Server/all.puml
+
+!include <awslib/AWSCommon>
+!include <awslib/AWSSimplified.puml>
+!include <awslib/Compute/all.puml>
+!include <awslib/mobile/all.puml>
+!include <awslib/general/all.puml>
+!include <awslib/GroupIcons/all.puml>
+!include <awslib/CustomerEngagement/all.puml>
+!include <awslib/NetworkingAndContentDelivery/all.puml>
+!include <awslib/EndUserComputing/all.puml>
+!include <awslib/ApplicationIntegration/all.puml>
+
+!include <tupadr3/common>
+!include <office/Servers/database_server>
+!include <office/Servers/application_server>
+!include <office/Concepts/firewall_orange>
+!include <office/Clouds/cloud_disaster_red>
+
+package "sample package"  {
+package "log collection" as p1 {
+    rectangle "syslog\nmultiple servers" as syslog1
+    rectangle "Log lines\n(Syslog server)" as loglines1
+    file "flat file" as flatfile1
+
+    syslog1 -> loglines1
+    loglines1 -> flatfile1
+}
+
+node <<device>> {
+    collections "syslog\nmultiple servers" as syslog2
+    file "Log lines\n(Syslog server)" as loglines2
+    database  "RDBMS" as dbms2
+    archimate #Technology "VPN Server" as vpnServerA <<technology-device>>
+
+
+    syslog2 <- loglines2
+    syslog2 <- dbms2
+    dbms2 <- loglines2
+    vpnServerA <- syslog2
+}
+}
+
+cloud {
+    rectangle "Conceptual model" <<Concept>> {
+        node node1
+        node node2
+        node node3
+        node node4
+        node node5
+    }
+    osa_server_database(server2, "A.D.", "domain controller")
+    osa_server_database(server, "MS SQL Server", "core data")
+
+    server2 .. server
+    server -> node1 : who knows
+    node1 -- node2 : label1
+    node1 .. node3 : label2
+    node1 ~~ node4 : label3
+    node1 == node5
+}
+
+rectangle {
+    Users(users, "Users", " ")
+    TraditionalServer(adExchange, "Ad Exchange", " ")
+    GenericDatabase(genRDBMS, "Generic DB", " ")
+    Client(client, "Gen. client", "")
+
+    users -> adExchange
+    genRDBMS <- users
+    client <- users
+}
+
+node5 -> users
+
+package "Sprites" {
+    OFF_DATABASE_SERVER(db,DB)
+    OFF_APPLICATION_SERVER(app,App-Server)
+    OFF_FIREWALL_ORANGE(fw,Firewall)
+    OFF_CLOUD_DISASTER_RED(cloud,Cloud)
+    db <-> app
+    app <--> fw
+    fw <.left.> cloud
+}
+
+@enduml

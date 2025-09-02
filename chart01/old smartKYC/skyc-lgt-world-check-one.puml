@@ -1,0 +1,131 @@
+@startuml
+
+skinparam dpi 600
+scale 1200*1800
+
+skinparam roundCorner 6
+skinparam shadowing false
+skinparam interface {
+  backgroundColor WhiteSmoke
+}
+skinparam actor {
+  FontName Open Sans Condensed Light
+  FontSize 14
+}
+skinparam arrow {
+  FontName Open Sans Condensed Light
+  FontSize 15
+}
+skinparam note {
+  FontName Open Sans Condensed Light
+  FontSize 13
+  BorderColor #bbb
+}
+skinparam footer {
+  FontName Open Sans Condensed Light
+  FontSize 14
+  FontColor DimGrey
+}
+skinparam sequence {
+  actorBorderThickness 1.2
+  participantBorderThickness 1.2
+  LifeLineBorderColor #ccc
+  ParticipantFontName Avenir Next Condensed
+  DividerBorderColor #eee
+  DividerBackgroundColor #fff
+  DividerFontName Open Sans Condensed Light
+  DividerFontSize 15
+  DividerFontStyle Light
+  TitleFontName Open Sans Condensed Light
+  TitleFontStyle Light
+  TitleFontSize 17
+}
+
+actor "User" as user #fff
+participant "Finantix KYC Web UI" as ui
+participant "Finantix KYC Main App" as main
+participant "Finantix KYC REST API" as api
+
+participant "Apache ActiveMQ" as apachemq #fff
+participant "Elasticsearch" as elasticsearch #fff
+participant "Oracle" as oracle #fff
+participant "Finantix KYC Exp Worker" as exp
+participant "World-Check One Consumer" as wcoc #FAF8FF
+
+participant "Proxy" as proxy #fef
+participant "World-Check One API" as wcoa #fef
+
+
+title
+Processing Flow of a Client Search action
+<font color="DimGrey" size="12">(R16.4.x)</font>
+endtitle
+
+
+== <b>Starting a search</b> ==
+
+user -> ui: submit a client search
+ui -> main: calls /action/reviews
+main -> main: split the request
+main -> elasticsearch: review meta information, scores, risks, \nsearched entity
+
+
+== <b>World-Check One</b> ==
+
+main -> apachemq: put message for Exp
+apachemq -> exp: get message
+
+exp -> wcoc: send query for World-Check One
+
+group if groupId has not been stored previously
+    wcoc -> proxy: Send query to\nWorld-Check One API \n/groups to retrieve groupId
+    proxy -> wcoa: Forward the query to\nWorld-Check One API
+    wcoa -> proxy: Response from\nWorld-Check One API
+    proxy -> wcoc: Forward the response\nfrom World-Check One API
+
+    wcoc -> wcoc: Store groupId to use in following queries
+end
+
+
+wcoc -> proxy: Send query to\nWorld-Check One API \n/cases/screeningRequest
+proxy -> wcoa: Forward the query to\nWorld-Check One API
+wcoa -> proxy: Response from\nWorld-Check One API
+proxy -> wcoc: Forward the response\nfrom World-Check One API
+
+group if a query to World-Check One API fails with error code 404
+    wcoc -> proxy: Send query to\nWorld-Check One API \n/groups to retrieve groupId
+    proxy -> wcoa: Forward the query to\nWorld-Check One API
+    wcoa -> proxy: Response from\nWorld-Check One API
+    proxy -> wcoc: Forward the response\nfrom World-Check One API
+
+    wcoc -> wcoc: Store groupId to use in following queries
+
+    group retry the query to World-Check One API
+        wcoc -> proxy: Send query to\nWorld-Check One API \n/cases/screeningRequest
+        proxy -> wcoa: Forward the query to\nWorld-Check One API
+        wcoa -> proxy: Response from\nWorld-Check One API
+        proxy -> wcoc: Forward the response\nfrom World-Check One API
+    end
+end
+
+
+wcoc -> wcoc: sorting and\nscoring the matches
+wcoc -> proxy: Send query for details for\neach of highest scoring matches\n/reference/profile/<entityId>
+proxy -> wcoa: Forward the query to\nWorld-Check One API
+wcoa -> proxy: Response from\nWorld-Check One API
+proxy -> wcoc: Forward the response\nfrom World-Check One API
+wcoc -> wcoc: Filtering and\n re-scoring the matches
+
+wcoc -> apachemq: put message for Exp\n(search results)
+main -> apachemq: get message (results)
+main -> oracle: store the results
+main -> elasticsearch: update search status (close a task)
+main -> ui: update search status
+
+|||
+
+footer
+
+endfooter
+
+@endumlwho

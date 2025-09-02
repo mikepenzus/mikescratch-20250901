@@ -1,0 +1,46 @@
+@startuml
+
+package "Load Balancer" {
+    [load balancer] --> [Main Servers] : HTTPS
+}
+
+
+package "Main Servers" {
+  [smartkyc.war]
+  [smartkyc.war] --> [Database] : MSSQLSRVR_1443
+  [smartkyc.war] --> [JMS] : IBMMQ_1414
+}
+
+package "Worker Servers" {
+  [smartkyc-media.war] --> [JMS] : IBMMQ_1414
+  [smartkyc-media.war]
+  [smartkyc-processing.war] --> [JMS] : IBMMQ_1414
+  [smartkyc-processing.war]
+}
+
+package "Providers" {
+  [Google CS API] <-- [smartkyc-media.war] : HTTPS
+  [Google CS API] <-- [smartkyc-processing.war] : HTTPS
+  [Google web] <-- [smartkyc-media.war] : HTTPS
+  [Google web] <-- [smartkyc-processing.war] : HTTPS
+  [Baidu] <-- [smartkyc-media.war] : HTTPS
+  [Baidu] <-- [smartkyc-processing.war] : HTTPS
+  [Google Translation API] <-- [smartkyc.war] : HTTPS
+  [Web sources of adverse media] <-- [smartkyc-media.war] : HTTPS
+  [Web sources of adverse media] <-- [smartkyc-processing.war] : HTTPS
+}
+
+
+package "Database" {
+    database "MS SQL Server" {
+    }
+}
+
+package "JMS" {
+    queue "IBM MQ Server" {
+    }
+}
+
+
+
+@enduml

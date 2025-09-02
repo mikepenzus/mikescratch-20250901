@@ -1,0 +1,47 @@
+@startuml
+!include <cloudinsight/tomcat>
+!include <cloudinsight/kafka>
+!include <cloudinsight/java>
+!include <cloudinsight/cassandra>
+!include <cloudinsight/postgresql>
+!include <cloudinsight/activemq>
+!include <cloudinsight/elasticsearch>
+!include <cloudinsight/server>
+!include <cloudinsight/sqlserver>
+!include <cloudinsight/windows>
+!include <cloudinsight/linux>
+!include <cloudinsight/apache>
+
+
+title Cloudinsight sprites example
+
+skinparam monochrome true
+
+node {
+    rectangle "<$tomcat>\nwebapp" as webapp
+    queue "<$kafka>" as kafka
+    rectangle "<$java>\ndaemon" as daemon
+    node "<$server>" as server
+    database "<$postgresql>" as psql
+    node "<$activemq>\nAMQ" as amq
+}
+
+package {
+    node "<$elasticsearch>\nES" as es
+    actor myactor
+    rectangle "<$apache>"
+    node "<$windows>" as windows
+    node "<$linux>" as linux
+}
+
+linux -- windows
+webapp -> kafka
+kafka -> myactor
+kafka -> daemon
+daemon --> server
+server  .. psql
+psql --> amq
+amq --> es
+server <--> windows
+
+@enduml

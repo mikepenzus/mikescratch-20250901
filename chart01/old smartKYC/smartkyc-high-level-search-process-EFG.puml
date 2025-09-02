@@ -1,0 +1,104 @@
+@startuml
+
+
+skinparam roundCorner 6
+skinparam shadowing false
+skinparam interface {
+  backgroundColor WhiteSmoke
+}
+skinparam actor {
+  FontName Open Sans Condensed Light
+  FontSize 14
+}
+skinparam arrow {
+  FontName Open Sans Condensed Light
+  FontSize 15
+}
+skinparam note {
+  FontName Open Sans Condensed Light
+  FontSize 13
+  BorderColor #bbb
+}
+skinparam footer {
+  FontName Open Sans Condensed Light
+  FontSize 14
+  FontColor DimGrey
+}
+skinparam sequence {
+  actorBorderThickness 1.2
+  participantBorderThickness 1.2
+  LifeLineBorderColor #ccc
+  ParticipantFontName Avenir Next Condensed
+  DividerBorderColor #eee
+  DividerBackgroundColor #fff
+  DividerFontName Open Sans Condensed Light
+  DividerFontSize 15
+  DividerFontStyle Light
+  TitleFontName Open Sans Condensed Light
+  TitleFontStyle Light
+  TitleFontSize 17
+}
+
+actor "End user\n(with a web browser)" as user #fff
+participant "World-Check watchlist collector" as filemover
+participant "smartKYC Main component" as main
+participant "smartKYC Processing component" as proc
+participant "smartKYC Exp component\nWorld-Check connector (file-based exp)" as djrc
+participant "smartKYC Media component\nGoogle CS connector" as googlecsconnector
+queue "JMS broker\n(ActiveMQ)" as queue #fff
+database "RDBMS\n(MS SQL Server)" as rdbms #fff
+database "Elasticsearch" as elasticsearch #fff
+participant "Google CS API (Internet)" as googlecsapi
+participant "WWW (Internet)" as www
+
+title smartKYC - High level indexing & search process
+
+=== Indexing file-based data sources  (initial indexing / daily update indexing) ==
+
+filemover -> main: send World-Check watchlist files
+main -> elasticsearch: indexing World-Check watchlist file
+
+
+=== Search process ==
+
+user -> main: submit a new search for an individual or organization\n(providers selected: World-Check [file-based],\n Google CS API)
+main -> user: ID of the search just submitted
+main -> main: process and split the search into requests\nto send to data providers
+
+group 1. run the Google CS request
+    main -> queue: process the Google CS request
+    queue -> googlecsconnector: Google CS request
+    googlecsconnector-> googlecsapi: perform actual search request on Google CS API\n(with adverse terms and other search options)
+    googlecsapi -> googlecsconnector: list of links and web snippets matching the search criteria
+    loop for each link and web snippet returned by the Google CS API
+        googlecsconnector -> queue: send download request
+        queue -> www: download document from link
+        www -> queue: downloaded document
+        queue -> proc: downloaded document
+        proc -> proc: process web snippet and document\n (accept or reject)
+        proc -> queue: processed web snippet and document
+        queue -> main: processed web snippet and document
+        main -> rdbms: save processed web snippet and document
+    end
+end
+
+group 2. run the World-Check request (file-based exp)
+    main -> queue: process the World-Check request
+    queue -> djrc: World-Check request
+    djrc-> elasticsearch: perform actual search request on Elasticsearch indexes
+    elasticsearch -> djrc: list of records matching the search criteria
+    loop for each record returned by Elasticsearch
+        djrc -> djrc: process record\n (accept or reject)
+        djrc -> queue: processed record
+        queue -> main: processed record
+        main -> rdbms: save processed record
+    end
+end
+
+
+main -> main: search post-processing
+user -> main: request search status/results
+main -> user: results\n(status, documents, snippets, facts, etc.)
+
+
+@enduml

@@ -1,0 +1,84 @@
+@startuml
+
+skinparam dpi 600
+scale 1200*1800
+
+skinparam roundCorner 6
+skinparam shadowing false
+skinparam interface {
+  backgroundColor WhiteSmoke
+}
+skinparam actor {
+  FontName Open Sans Condensed Light
+  FontSize 14
+}
+skinparam arrow {
+  FontName Open Sans Condensed Light
+  FontSize 15
+}
+skinparam note {
+  FontName Open Sans Condensed Light
+  FontSize 13
+  BorderColor #bbb
+}
+skinparam footer {
+  FontName Open Sans Condensed Light
+  FontSize 14
+  FontColor DimGrey
+}
+skinparam sequence {
+  actorBorderThickness 1.2
+  participantBorderThickness 1.2
+  LifeLineBorderColor #ccc
+  ParticipantFontName Avenir Next Condensed
+  DividerBorderColor #eee
+  DividerBackgroundColor #fff
+  DividerFontName Open Sans Condensed Light
+  DividerFontSize 15
+  DividerFontStyle Light
+  TitleFontName Open Sans Condensed Light
+  TitleFontStyle Light
+  TitleFontSize 17
+}
+
+
+group for each target name: start a full automatic search
+    DemystData -> smartKYC: start full automatic search (by search parameters)
+    smartKYC --> DemystData: reviewId (the search is running asynchronously together with extended searches)
+
+    DemystData -> DemystData: add this reviewId to the list of reviewIds to monitor
+end
+
+group async execution of a review (primary search + extended searches)
+    smartKYC -> "Google CS API": perform search
+    "Google CS API" --> smartKYC: links
+
+    loop for each acceptable link
+        smartKYC -> "web site": download document from the link
+        "web site" --> smartKYC: HTML/Office/PDF document/other links
+        smartKYC -> smartKYC: process document and store results
+    end
+end
+
+loop for each reviewId in the reviewId list to monitor
+
+    DemystData -> smartKYC: request if the full automatic search is in progress (by reviewId)
+    smartKYC --> DemystData: current status of the search
+
+    group if full automatic search is completed
+        DemystData -> smartKYC: request full search details (primary search + extended searches) by reviewId
+        smartKYC --> DemystData: full search details
+
+        group if there is a risk
+            DemystData -> smartKYC: generate comprehensive dossier by reviewId
+            smartKYC --> DemystData: dossierId
+
+            DemystData -> smartKYC: download comprehensive dossier by reviewId and dossierId
+            smartKYC --> DemystData: comprehensive dossier (PDF)
+        end
+    end
+
+end
+
+
+@enduml

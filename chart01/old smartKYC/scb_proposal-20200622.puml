@@ -1,0 +1,130 @@
+@startuml
+
+skinparam dpi 600
+scale 1200*1800
+
+skinparam roundCorner 6
+skinparam shadowing false
+skinparam interface {
+  backgroundColor WhiteSmoke
+}
+skinparam actor {
+  FontName Open Sans Condensed Light
+  FontSize 14
+}
+skinparam arrow {
+  FontName Open Sans Condensed Light
+  FontSize 15
+}
+skinparam note {
+  FontName Open Sans Condensed Light
+  FontSize 13
+  BorderColor #bbb
+}
+skinparam footer {
+  FontName Open Sans Condensed Light
+  FontSize 14
+  FontColor DimGrey
+}
+skinparam sequence {
+  actorBorderThickness 1.2
+  participantBorderThickness 1.2
+  LifeLineBorderColor #ccc
+  ParticipantFontName Avenir Next Condensed
+  DividerBorderColor #eee
+  DividerBackgroundColor #fff
+  DividerFontName Open Sans Condensed Light
+  DividerFontSize 15
+  DividerFontStyle Light
+  TitleFontName Open Sans Condensed Light
+  TitleFontStyle Light
+  TitleFontSize 17
+}
+
+group start a batch of searches
+    DemystData -> smartKYC: post CSV batch file (max 100 lines each containing a single name to search) to start the search
+    smartKYC --> DemystData:  batchId (the search is async)
+
+    DemystData -> smartKYC: request reviewId list by batchId (paged call)
+    smartKYC --> DemystData: reviewId list
+
+    DemystData -> DemystData: add these reviewId's to the first list of reviewIds to monitor
+end
+
+group async execution of a review
+    smartKYC -> "Google CS API": perform search
+    "Google CS API" --> smartKYC: links
+
+    loop for each acceptable link
+        smartKYC -> "web site": download document from the link
+        "web site" --> smartKYC: HTML/Office/PDF document/other links
+        smartKYC -> smartKYC: process document and store results
+    end
+end
+
+loop for each reviewId in the first reviewId list to monitor
+
+    DemystData -> smartKYC: request review status by reviewId
+    smartKYC --> DemystData: review status (finished, ongoing, risk level + other details)
+
+    group if review is finished
+        group start extended searches on specific relations (e.g., "spouse", "son", "father", ...)
+            DemystData -> smartKYC: start extended search on target relation
+            smartKYC --> DemystData: reviewId
+        end
+        DemystData -> DemystData: add the current reviewId to the second monitor list
+    end
+
+end
+
+group async execution of an extended search
+    smartKYC -> "Google CS API": perform search
+    "Google CS API" --> smartKYC: links
+
+    loop for each acceptable link
+        smartKYC -> "web site": download document from the link
+        "web site" --> smartKYC: HTML/Office/PDF document/other links
+        smartKYC -> smartKYC: process document and store results
+    end
+end
+
+
+loop for each reviewId in the second reviewId list to monitor
+
+    DemystData -> smartKYC: request status of related individuals by reviewId
+    smartKYC --> DemystData: status of related individuals by reviewId (includes status of search and risk level)
+
+    DemystData -> smartKYC: request status of related entities by reviewId
+    smartKYC --> DemystData: status of related entities by reviewId (includes status of search and risk level)
+
+    group if related individuals are finished and related entities are finished
+
+        DemystData -> smartKYC: request documentId list by reviewId
+        smartKYC --> DemystData: documentId list
+
+        loop for each documentId batch (max batch size: 1000)
+            DemystData -> smartKYC: select documentId batch
+        end
+
+        loop for each related individual for which an extended search was found
+            DemystData -> smartKYC: select the fact referring to that related individual
+        end
+
+        loop for each related entity for which an extended search was found
+            DemystData -> smartKYC: select the fact referring to that related entity
+        end
+
+        DemystData -> smartKYC: generate comprehensive dossier by reviewId
+        smartKYC --> DemystData: dossierId
+
+        DemystData -> smartKYC: download comprehensive dossier by reviewId and dossierId
+        smartKYC --> DemystData: comprehensive dossier (PDF)
+
+    end
+
+    DemystData -> DemystData: compute risk level=risk level of the review+risk level of related individuals/entities
+
+end
+
+
+@enduml

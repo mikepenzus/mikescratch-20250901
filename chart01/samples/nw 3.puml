@@ -1,0 +1,23 @@
+@startuml
+
+!include <cloudinsight/tomcat>
+!include <cloudinsight/kafka>
+!include <cloudinsight/java>
+!include <cloudinsight/cassandra>
+!include <cloudinsight/postgresql>
+!include <cloudinsight/activemq>
+!include <cloudinsight/elasticsearch>
+!include <cloudinsight/server>
+!include <cloudinsight/sqlserver>
+!include <cloudinsight/windows>
+!include <cloudinsight/linux>
+!include <cloudinsight/apache>
+
+!include <office/Servers/application_server>
+!include <office/Servers/database_server>
+!include <office/Concepts/firewall_orange>
+!include <office/Clouds/cloud_disaster_red>
+
+listsprites
+
+@enduml

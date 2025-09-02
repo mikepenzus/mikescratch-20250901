@@ -1,0 +1,80 @@
+@startuml
+
+skinparam dpi 600
+scale 1200*1800
+
+skinparam roundCorner 6
+skinparam shadowing false
+skinparam interface {
+  backgroundColor WhiteSmoke
+}
+skinparam actor {
+  FontName Open Sans Condensed Light
+  FontSize 14
+}
+skinparam arrow {
+  FontName Open Sans Condensed Light
+  FontSize 15
+}
+skinparam note {
+  FontName Open Sans Condensed Light
+  FontSize 13
+  BorderColor #bbb
+}
+skinparam footer {
+  FontName Open Sans Condensed Light
+  FontSize 14
+  FontColor DimGrey
+}
+skinparam sequence {
+  actorBorderThickness 1.2
+  participantBorderThickness 1.2
+  LifeLineBorderColor #ccc
+  ParticipantFontName Avenir Next Condensed
+  DividerBorderColor #eee
+  DividerBackgroundColor #fff
+  DividerFontName Open Sans Condensed Light
+  DividerFontSize 15
+  DividerFontStyle Light
+  TitleFontName Open Sans Condensed Light
+  TitleFontStyle Light
+  TitleFontSize 17
+}
+
+actor "User" as user #fff
+participant "sKYC Main Web UI" as ui
+participant "sKYC Main REST API" as api
+database "CouchDB" as couch #fff
+participant "Proxy" as proxy #fef
+participant "Translations api" as tapi #FAF8FF
+
+
+title
+smartKYC > Processing Flow: Translation of a snippet action with proxy
+endtitle
+
+
+== <b>Translating a snippet</b> ==
+
+
+user -> ui: Hover over a snippet
+ui -> api: calls /state/.../translate api
+activate api #BBBBFF
+api -> couch: check translated snippet cache
+couch -> api: translation not cached
+api -> proxy: translation api call
+proxy -> tapi: forward translation api call
+tapi -> proxy: return translated snippet
+proxy -> api: forward translated snippet
+api -> couch: cache translated snippet
+api --> ui: api call ACK
+deactivate api
+ui --> user: update the view
+
+|||
+
+footer
+
+endfooter
+
+@endumlwho

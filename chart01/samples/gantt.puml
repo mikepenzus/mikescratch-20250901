@@ -1,0 +1,97 @@
+@startgantt
+scale 1.2
+
+<style>
+ganttDiagram {
+    task {
+        FontName Roboto
+        FontColor White
+        FontSize 16
+        BackGroundColor #2292d0
+        LineColor #2292d0
+    }
+    milestone {
+        FontName Roboto
+        FontColor black
+        FontSize 12
+        FontStyle bold
+        BackGroundColor red
+        LineColor red
+    }
+    note {
+        WrapWidth 21
+        FontName Roboto
+        FontColor black
+        FontSize 12
+        BackGroundColor #EDEDED
+        LineColor white
+    }
+}
+</style>
+
+printscale weekly
+Project starts 2020-10-15
+
+[LGT] starts 2020-10-15 and ends 2021-06-30
+note bottom
+
+* Fix JMS issue
+* AML assessment
+* Continuous monitoring
+* Improve CLM integration
+end note
+[Release 18.2.3.3.1] happens 2021-01-04
+[Workshop cont. monitoring] happens 2021-01-13
+[Release 18.2.3.3.2] happens 2021-01-15
+
+[OCBC] starts 2020-10-15 and ends 2021-06-30
+note bottom
+
+* Roll-out of 16.7.x in production
+* Migration to 18.x
+end note
+[Release 16.7.1] happens 2020-12-23 and is colored in green
+[Release 16.7.2] happens 2020-12-30 and is colored in green
+[Migration OCBC to 18.x?] happens 2021-01-31
+
+[Bank of Singapore] starts 2020-10-15 and ends 2021-06-30
+note bottom
+
+* Slow dossier creation for big docs
+* Crash because of dossier creation
+end note
+[Migration BoS to 18.x?] happens 2021-02-28
+
+[Banco Itaú] starts 2020-10-15 and ends 2021-06-30
+note bottom
+
+* Scoring improvements
+* Project renewal
+end note
+[Scoring improvement #1 R11.18.5] happens 2020-12-22 and is colored in green
+[Scoring improvement #2 R11.18.6 ???] happens 2021-1-22
+
+[Prospects] starts 2020-10-15 and ends 2021-06-30
+note bottom
+* EdR
+* Handelsbanken
+end note
+[EdR IT workshop] happens 2021-1-8
+
+
+[Delivery] starts 2020-10-15 and ends 2021-06-30
+note bottom
+
+* Improve tests for record prov.
+* Improve tests for scraping prov.
+* Improve installation guide
+
+end note
+[Baidu tester R1] happens 2020-12-08 and is colored in green
+then [Baidu tester R2] lasts 15 days
+
+[Config. framework] happens 2020-12-17 and is colored in green
+
+
+
+@endgantt

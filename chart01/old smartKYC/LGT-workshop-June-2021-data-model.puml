@@ -1,0 +1,25 @@
+@startuml
+
+
+class Review {
+Approved
+}
+
+class ReviewCycle {
+StartedTime
+ConfirmedTime
+}
+
+
+Review *--> ReviewCycle
+
+ReviewCycle *--> Request
+
+ReviewCycle *--> DossierSnapshot
+
+Request *--> ProcessingTask
+
+ProcessingTask *--> SearchResults
+
+
+@enduml

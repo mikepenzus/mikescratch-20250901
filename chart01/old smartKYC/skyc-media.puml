@@ -1,0 +1,92 @@
+@startuml
+
+skinparam dpi 1200
+scale 1200*1800
+
+skinparam roundCorner 6
+skinparam shadowing false
+skinparam interface {
+  backgroundColor WhiteSmoke
+}
+skinparam actor {
+  FontName Open Sans Condensed Light
+  FontSize 14
+}
+skinparam arrow {
+  FontName Open Sans Condensed Light
+  FontSize 15
+}
+skinparam note {
+  FontName Open Sans Condensed Light
+  FontSize 13
+  BorderColor #bbb
+}
+skinparam footer {
+  FontName Open Sans Condensed Light
+  FontSize 14
+  FontColor DimGrey
+}
+skinparam sequence {
+  actorBorderThickness 1.2
+  participantBorderThickness 1.2
+  LifeLineBorderColor #ccc
+  ParticipantFontName Avenir Next Condensed
+  DividerBorderColor #eee
+  DividerBackgroundColor #fff
+  DividerFontName Open Sans Condensed Light
+  DividerFontSize 15
+  DividerFontStyle Light
+  TitleFontName Open Sans Condensed Light
+  TitleFontStyle Light
+  TitleFontSize 17
+}
+
+actor "User" as user #fff
+participant "sKYC Main Server" as main
+participant "sKYC Media Server Cution" as cution
+participant "sKYC Processing" as proc
+participant "sKYC Media Server Google CS connector" as google
+queue "Apache ActiveMQ" as queue #fff
+database "RDBMS" as rdbms #fff
+participant "Proxy" as proxy #fef
+participant "Anonymizer" as anonymizer #fef
+participant "Google CS API" as googleapi
+participant "Internet" as inet
+
+title
+Adverse media document retrieval (from Google CS API) and processing through proxy server and anonymizer: typical implementation
+<font color="DimGrey" size="12">(smartKYC R18.7.x)</font>
+endtitle
+
+
+
+user -> main: submit a client search
+main -> user: review with ID N started
+main -> main: process and split requests
+main -> queue: Google CS request
+queue -> google: Google CS requests
+google-> anonymizer: request to retrieve list\n of URLs to download
+anonymizer -> googleapi: request to retrieve\n list of URLs to download
+googleapi -> anonymizer: response
+anonymizer -> google: forward the response\n from Google CS API
+google -> google: process the response
+google -> queue:  list of URLs to download
+loop for each URL to download authorized by smartKYC url-rules
+queue -> cution:  URL to download
+cution -> proxy:  download document from URL
+proxy -> inet:  download document from URL
+inet -> cution: downloaded document
+cution -> queue: downloaded document
+queue -> proc: downloaded document
+proc -> proc: processing document\n (accept or reject)
+proc -> queue: processed document
+queue -> main: processed document
+main -> rdbms: save processed document
+end
+main -> main: search post-processing
+user -> main: request search status/results
+main -> user: results\n(status, documents, snippets, facts, etc.)
+
+
+
+@enduml

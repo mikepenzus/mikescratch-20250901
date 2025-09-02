@@ -1,0 +1,16 @@
+@startgantt
+scale 1.5
+
+
+printscale weekly
+Project starts the 1 Feb  2021
+[Prototype design] lasts 130 days
+'[TASK1] is colored in Lavender/LightBlue
+[Testing]  starts 20 days after [Prototype design]'s start
+[Testing] lasts 10 days
+'[Prototype design]->[Testing]
+[Testing]-> [Prototype completed]
+[Prototype completed] happens at [Testing]'s end
+[Roll-out] happens  after [Prototype design]'s end
+
+@endgantt

@@ -1,0 +1,86 @@
+@startuml
+
+!include <cloudinsight/tomcat>
+!include <cloudinsight/kafka>
+!include <cloudinsight/java>
+!include <cloudinsight/cassandra>
+!include <cloudinsight/postgresql>
+!include <cloudinsight/activemq>
+!include <cloudinsight/elasticsearch>
+!include <cloudinsight/server>
+!include <cloudinsight/sqlserver>
+!include <cloudinsight/windows>
+!include <cloudinsight/linux>
+!include <cloudinsight/apache>
+
+!include <office/Servers/application_server>
+!include <office/Servers/database_server>
+!include <office/Concepts/firewall_orange>
+!include <office/Clouds/cloud_disaster_red>
+!include <office/Servers/reverse_proxy>
+!include <office/Users/users>
+
+
+
+
+title Logical topological network
+' from https://plantuml.com/nwdiag
+' https://github.com/Roemer/plantuml-office/tree/295c1f7bd9159e5da6f01962e0d6554a018bda30
+
+
+nwdiag {
+
+  inet [shape = cloud]
+  inet -- firewall;
+
+  network inet {
+    width = full
+    color = "red"
+
+    firewall [color = "white", description = "<$firewall_orange>\nFirewall", shape="label"];
+    proxy1 [description = "<$reverse_proxy>\nProxy server"];
+  }
+
+
+  network dmz {
+    width = full
+    address = "192.168.10.0/24"
+    color = "orange"
+
+    proxy1;
+    web01 [address = ".1", shape = "label", description = "<&cog>Linux\n\n<$linux>"]
+    web02 [address = ".2", shape = "queue", description = "<$application_server>\nActiveMQ"]
+    web03 [address = "0.0.0.0", shape = database, description = "<$postgresql>\nPostgreSQL"]
+    proxy2
+    web04 [shape="node"]
+  }
+
+  network internal {
+    width = full
+    address = "192.168.20.0/24"
+    color = "lightblue"
+    web01 [address = ".1"]
+    web02 [address = ".2"]
+    db01 [address = ".101", shape = database, description = "<$elasticsearch>\nElasticsearch" ]
+    db02 [address = ".102", shape = database, description = "<$database_server>\nMS SQL"]
+    xlsx01 [description = "<&spreadsheet*4>\n Excel"];
+
+    // define network using defined nodes
+    group db {
+      db01;
+      db02;
+    }
+  }
+
+  network user_network {
+    width = full
+    color = "gray"
+
+    user [description = "<$users>\nUsers"];
+    proxy2 [description = "<$reverse_proxy>\nProxy server"];
+
+  }
+}
+
+
+@enduml

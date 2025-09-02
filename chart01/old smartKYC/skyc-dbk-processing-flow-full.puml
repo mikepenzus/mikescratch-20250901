@@ -1,0 +1,216 @@
+@startuml
+
+skinparam dpi 600
+scale 1200*1800
+
+skinparam roundCorner 6
+skinparam shadowing false
+skinparam interface {
+  backgroundColor WhiteSmoke
+}
+skinparam actor {
+  FontName Open Sans Condensed Light
+  FontSize 14
+}
+skinparam arrow {
+  FontName Open Sans Condensed Light
+  FontSize 15
+}
+skinparam note {
+  FontName Open Sans Condensed Light
+  FontSize 13
+  BorderColor #bbb
+}
+skinparam footer {
+  FontName Open Sans Condensed Light
+  FontSize 14
+  FontColor DimGrey
+}
+skinparam sequence {
+  actorBorderThickness 1.2
+  participantBorderThickness 1.2
+  LifeLineBorderColor #ccc
+  ParticipantFontName Avenir Next Condensed
+  DividerBorderColor #eee
+  DividerBackgroundColor #fff
+  DividerFontName Open Sans Condensed Light
+  DividerFontSize 15
+  DividerFontStyle Light
+  TitleFontName Open Sans Condensed Light
+  TitleFontStyle Light
+  TitleFontSize 17
+}
+
+actor "User" as user #fff
+participant "sKYC Main\n Web UI" as ui
+participant "sKYC Main\n REST Api" as api
+participant "sKYC Main\n Snapshot" as snapshot
+participant "sKYC Main\n Back runner" as backrunner
+participant "IBM MQ" as mq #fff
+database "CouchDB" as couch #fff
+database "Oracle DB" as oracle #fff
+participant "sKYC Exp\n Worker" as exp #eff
+participant "sKYC Media\n Connector" as media #fef
+participant "sKYC Media\n Search" as search #fef
+participant "sKYC Media\n Scraper" as cution #fef
+participant "sKYC\n Processing\n Worker" as proc #ffe
+participant "Media\n provider" as gmp #fee
+participant "Profile\n provider" as pp #fef
+participant "Search\n Engine" as se #eef
+participant "Internet" as inet #efe
+
+
+title
+smartKYC > Processing Flow of a Client Search action
+<font color="DimGrey" size="12">(v. 2018-11-30)</font>
+endtitle
+
+=== Starting a search ==
+user -> ui : submit a client search
+ui -> api: calls /action/reviews
+activate api #BBBBFF
+api -> snapshot: review started event
+snapshot -> couch: review and search data, progress and settings
+snapshot -> mq: start search for each provider
+snapshot -> snapshot: search started event
+snapshot -> api: event feedback
+api -> ui: api call ACK
+deactivate api
+snapshot -> mq: sent to back runner monitor search progress event
+
+
+newpage
+
+=== Media provider search ==
+snapshot -> mq: put message for Media
+mq --> media: get message / open tx
+activate mq #FFBBBB
+media -> mq: split/additional request (optional)
+mq --> media: get additional request
+media -> gmp: query media provider
+gmp -> media: retrieve the documents
+loop for each document
+    media -> couch: check for duplication
+    media -> mq: send document to process
+    ref over media, proc :Process document
+end
+media --> couch: update search progress
+media -> mq: commit tx
+deactivate mq
+
+newpage
+
+=== Search engine search ==
+snapshot -> mq: put message for Media
+mq --> search: get message / open tx
+activate mq #FFBBBB
+search -> mq: split/additional request (optional)
+search -> se: query search engine
+se -> search: retrieve the list of urls
+loop for each url
+    search -> mq: send url to be downloaded
+    ref over media, cution :Download internet document from URL
+end
+search --> couch: update search progress
+search -> mq: send document to main to be stored
+ref over mq, snapshot: Store document
+search -> mq: commit tx
+deactivate mq
+
+newpage
+
+=== Download internet document from URL ==
+search -> mq: put url to download
+mq --> cution: get message / open tx
+activate mq #FFBBBB
+cution ->inet: get url
+inet -> cution: retrieve document
+...  clean the document ...
+cution <-> couch: check for duplication
+cution -> mq: send document to process
+ref over search, proc :Process document
+search -> mq: send document to main to be stored
+ref over mq, snapshot: Store document
+cution --> couch: update search progress
+cution -> mq: commit tx
+deactivate mq
+
+newpage
+
+=== EXP provider search ==
+snapshot -> mq: put message for Exp
+mq --> exp: get message / open tx
+activate mq #FFBBBB
+exp -> pp: query exp provider (can also be DB)
+pp -> exp: retrieve the documents
+exp <-> couch: check for duplication
+exp -> exp: extracting information and scoring
+exp -> mq: send document to main to be stored
+ref over mq, snapshot: Store document
+
+exp --> couch: update search progress
+exp -> mq: commit tx
+deactivate mq
+
+newpage
+
+=== Process document ==
+search -> mq: send document to process
+mq --> proc: get the document
+activate mq #FFBBBB
+...  process the documents ...
+proc -> mq: send processed document to snapshot
+proc --> couch: update search progress
+proc -> mq: commit tx
+deactivate mq
+
+newpage
+
+=== Store document ==
+mq --> snapshot: get document to store
+activate mq #FFBBBB
+snapshot -> oracle: store the results
+snapshot -> couch: store the results
+snapshot -> couch: update search status
+snapshot -> mq: commit tx
+deactivate mq
+
+newpage
+
+=== Search done ==
+snapshot --> mq: sent to back runner monitor search progress event
+mq -> backrunner: search progress update start
+activate mq #FFBBBB
+loop poll until done
+   backrunner -> couch: search status
+   couch -> backrunner: get search status
+   ... sleep ...
+end
+... information aggregation and statistics updated ...
+backrunner -> mq: search done event
+deactivate mq
+mq -> snapshot: search done event
+activate mq #FFBBBB
+snapshot -> couch: update search status
+snapshot -> oracle: update review data
+snapshot -> mq: search done event
+deactivate mq
+
+newpage
+
+=== Search progress ==
+user --> ui: waiting for search to end
+loop poll until search is completed
+ui -> api: calls /state/cycles/reviews/{reviewId}/requests/progress api
+activate api #BBBBFF
+api -> couch: retrieve current search status
+couch -> api: search status response
+api -> ui: search status response
+deactivate api #BBBBFF
+ui --> user: Update progress
+   ... sleep ...
+end
+ui --> user: show search as done
+|||
+
+@endumlwho

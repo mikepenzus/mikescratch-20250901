@@ -1,0 +1,60 @@
+@startuml
+|Test Coordinator|
+|Project Coordinator|
+start
+:propose release scope and plan,\nincl. release date and lead time;
+
+|Product Manager|
+:provide feedback and corrections to scope and plan;
+
+|Technical Architect|
+:provide feedback and corrections to scope and plan;
+:appoint Project Architect;
+
+fork
+|Project Coordinator|
+:coordinates preparation of test environment(s);
+
+|Test Coordinator|
+:appoint Tester(s)\nOne of the testers is in charge for the test plan;
+:prepare test plan,\nincl. sample internal lists and batches;
+:test merged tickets;
+
+|Project Architect|
+fork again
+:works with the dev team to develop the release;
+:check and merge tickets as soon as they are implemented;
+
+end fork
+
+:build candidate release and deploy on test environments;
+
+|Test Coordinator|
+fork
+:run MVP test checklist;
+
+|Project Coordinator|
+fork again
+:review release plan;
+:review test plan;
+:review product configuration;
+:create release and upgrade notes;
+
+|Project Architect|
+fork again
+:works with the dev team to fix bugs;
+
+end fork
+
+|Project Architect|
+:build final release;
+
+|Project Coordinator|
+:post-build checks;
+:deliver release;
+:plan the release review meeting with\nProduct Manager and Technical Architect;
+
+
+stop
+
+@enduml

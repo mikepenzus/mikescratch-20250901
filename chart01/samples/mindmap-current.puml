@@ -1,0 +1,36 @@
+@startwbs
+scale 1.2
+
+* ONGOING ACTIVITIES
+** OCBC
+*** Roll-out of 16.7.x in production
+*** Migration to 18.x
+
+** BoS
+*** Slow dossier creation for big docs
+*** Crash because of dossier creation
+
+
+** LGT
+*** Fix JMS issue
+*** AML assessment
+*** Continuous monitoring
+*** Improve CLM integration
+
+
+** EFG
+*** Support
+*** Tomcat and Kerberos
+
+** BJSS
+*** Finalize test with Scalaris
+*** Finalize contract
+
+
+** Delivery
+*** Improve tests for record prov.
+*** Improve tests for scraping prov.
+*** Improve installation guide
+
+
+@endwbs

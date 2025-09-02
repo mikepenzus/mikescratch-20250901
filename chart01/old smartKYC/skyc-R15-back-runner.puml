@@ -1,0 +1,77 @@
+@startuml
+
+skinparam dpi 600
+scale 1200*1800
+
+skinparam roundCorner 6
+skinparam shadowing false
+skinparam interface {
+  backgroundColor WhiteSmoke
+}
+skinparam actor {
+  FontName Open Sans Condensed Light
+  FontSize 14
+}
+skinparam arrow {
+  FontName Open Sans Condensed Light
+  FontSize 15
+}
+skinparam note {
+  FontName Open Sans Condensed Light
+  FontSize 13
+  BorderColor #bbb
+}
+skinparam footer {
+  FontName Open Sans Condensed Light
+  FontSize 14
+  FontColor DimGrey
+}
+skinparam sequence {
+  actorBorderThickness 1.2
+  participantBorderThickness 1.2
+  LifeLineBorderColor #ccc
+  ParticipantFontName Avenir Next Condensed
+  DividerBorderColor #eee
+  DividerBackgroundColor #fff
+  DividerFontName Open Sans Condensed Light
+  DividerFontSize 15
+  DividerFontStyle Light
+  TitleFontName Open Sans Condensed Light
+  TitleFontStyle Light
+  TitleFontSize 17
+}
+
+participant "sKYC Main Snapshot" as snapshot
+participant "sKYC Main Backrunner" as backrunner
+participant "Solace" as mq #fff
+database "CouchDB" as couch #fff
+database "MSSQL" as oracle #fff
+
+
+title
+smartKYC > Processing Flow: back runner task
+endtitle
+
+
+== <b>Delegating heavy tasks asyncronously</b> ==
+
+snapshot -> mq: delegate heavy task
+mq --> backrunner: get backrunner job message
+activate mq #FFBBBB
+ ... performing the job ...
+backrunner -> mq: job done event to snapshot
+backrunner -> mq: commit tx
+deactivate mq
+mq --> snapshot: get job done event
+activate mq #FFBBBB
+snapshot -> couch: update search status
+snapshot -> oracle: update review data
+snapshot -> mq: commit tx
+deactivate mq
+|||
+
+footer
+
+endfooter
+
+@endumlwho

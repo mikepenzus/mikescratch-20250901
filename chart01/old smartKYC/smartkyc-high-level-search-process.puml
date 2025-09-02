@@ -1,0 +1,139 @@
+@startuml
+
+skinparam dpi 2400
+scale 1200*1800
+
+skinparam roundCorner 6
+skinparam shadowing false
+skinparam interface {
+  backgroundColor WhiteSmoke
+}
+skinparam actor {
+  FontName Open Sans Condensed Light
+  FontSize 14
+}
+skinparam arrow {
+  FontName Open Sans Condensed Light
+  FontSize 15
+}
+skinparam note {
+  FontName Open Sans Condensed Light
+  FontSize 13
+  BorderColor #bbb
+}
+skinparam footer {
+  FontName Open Sans Condensed Light
+  FontSize 14
+  FontColor DimGrey
+}
+skinparam sequence {
+  actorBorderThickness 1.2
+  participantBorderThickness 1.2
+  LifeLineBorderColor #ccc
+  ParticipantFontName Avenir Next Condensed
+  DividerBorderColor #eee
+  DividerBackgroundColor #fff
+  DividerFontName Open Sans Condensed Light
+  DividerFontSize 15
+  DividerFontStyle Light
+  TitleFontName Open Sans Condensed Light
+  TitleFontStyle Light
+  TitleFontSize 17
+}
+
+actor "End user\n(with a web browser)" as user #fff
+participant "Dow Jones Factiva R&C watchlist collector" as filemover
+participant "smartKYC Main component" as main
+participant "smartKYC Processing component" as proc
+participant "smartKYC Exp component\nDow Jones Factiva Risk & Compliance connector (file-based exp)" as djrc
+participant "smartKYC Exp component\nWikipedia connector (API-based exp)" as wikipedia
+participant "smartKYC Media component\nDow Jones Factiva connector" as factivaconnector
+participant "smartKYC Media component\nGoogle CS connector" as googlecsconnector
+queue "JMS broker\n(IBM MQ)" as queue #fff
+database "RDBMS\n(PostgreSql)" as rdbms #fff
+database "Elasticsearch" as elasticsearch #fff
+participant "DJ Factiva API (Internet)" as factivaapi
+participant "Wikipedia API (Internet)" as wikipediaapi
+participant "Google CS API (Internet)" as googlecsapi
+participant "WWW (Internet)" as www
+
+title smartKYC - High level indexing & search process
+
+=== Indexing file-based data sources  (initial indexing / daily update indexing) ==
+
+filemover -> main: send DJ Factiva R&C watchlist files
+main -> elasticsearch: indexing DJ Factiva R&C watchlist file
+
+
+=== Search process ==
+
+user -> main: submit a new search for an individual or organization\n(providers selected: Dow Jones Factiva R&C [file-based],\n Dow Jones Factiva Press, Wikipedia,\nGoogle CS API)
+main -> user: ID of the search just submitted
+main -> main: process and split the search into requests\nto send to data providers
+
+group 1. run the Dow Jones Factiva Press request
+    main -> queue: process the Dow Jones Factiva Press request
+    queue -> factivaconnector: Dow Jones Factiva Press request
+    factivaconnector-> factivaapi: perform actual search request on Dow Jones Factiva Press API\n(with adverse terms and other search options)
+    factivaapi -> factivaconnector: list of documents matching the search criteria
+    loop for each document returned by the Dow Jones Factiva Press API
+        factivaconnector -> queue: downloaded document
+        queue -> proc: downloaded document
+        proc -> proc: process document\n (accept or reject)
+        proc -> queue: processed document
+        queue -> main: processed document
+        main -> rdbms: save processed document
+    end
+end
+
+group 2. run the Google CS request
+    main -> queue: process the Google CS request
+    queue -> googlecsconnector: Google CS request
+    googlecsconnector-> googlecsapi: perform actual search request on Google CS API\n(with adverse terms and other search options)
+    googlecsapi -> googlecsconnector: list of links and web snippets matching the search criteria
+    loop for each link and web snippet returned by the Google CS API
+        googlecsconnector -> queue: send download request
+        queue -> www: download document from link
+        www -> queue: downloaded document
+        queue -> proc: downloaded document
+        proc -> proc: process web snippet and document\n (accept or reject)
+        proc -> queue: processed web snippet and document
+        queue -> main: processed web snippet and document
+        main -> rdbms: save processed web snippet and document
+    end
+end
+
+group 3. run the Dow Jones Factiva Risk & Compliance request (file-based exp)
+    main -> queue: process the Dow Jones Factiva Risk & Compliance request
+    queue -> djrc: Dow Jones Factiva Risk & Compliance request
+    djrc-> elasticsearch: perform actual search request on Elasticsearch indexes
+    elasticsearch -> djrc: list of records matching the search criteria
+    loop for each record returned by Elasticsearch
+        djrc -> djrc: process record\n (accept or reject)
+        djrc -> queue: processed record
+        queue -> main: processed record
+        main -> rdbms: save processed record
+    end
+end
+
+group 4. run the Wikipedia request (API-based exp)
+    main -> queue: process the Wikipedia request
+    queue -> wikipedia: Wikipedia request
+    wikipedia -> wikipediaapi: perform actual search request on Wikipedia API
+    wikipediaapi -> wikipedia: list of records matching the search criteria
+    loop for each record returned by Wikipedia
+        wikipedia -> wikipedia: process record\n (accept or reject)
+        wikipedia -> queue: processed record
+        queue -> main: processed record
+        main -> rdbms: save processed record
+    end
+end
+
+
+main -> main: search post-processing
+user -> main: request search status/results
+main -> user: results\n(status, documents, snippets, facts, etc.)
+
+
+
+@enduml

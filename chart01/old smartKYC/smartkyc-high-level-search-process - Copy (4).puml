@@ -1,0 +1,99 @@
+@startuml
+
+skinparam dpi 1200
+scale 1200*1800
+
+skinparam roundCorner 6
+skinparam shadowing false
+skinparam interface {
+  backgroundColor WhiteSmoke
+}
+skinparam actor {
+  FontName Open Sans Condensed Light
+  FontSize 14
+}
+skinparam arrow {
+  FontName Open Sans Condensed Light
+  FontSize 15
+}
+skinparam note {
+  FontName Open Sans Condensed Light
+  FontSize 13
+  BorderColor #bbb
+}
+skinparam footer {
+  FontName Open Sans Condensed Light
+  FontSize 14
+  FontColor DimGrey
+}
+skinparam sequence {
+  actorBorderThickness 1.2
+  participantBorderThickness 1.2
+  LifeLineBorderColor #ccc
+  ParticipantFontName Avenir Next Condensed
+  DividerBorderColor #eee
+  DividerBackgroundColor #fff
+  DividerFontName Open Sans Condensed Light
+  DividerFontSize 15
+  DividerFontStyle Light
+  TitleFontName Open Sans Condensed Light
+  TitleFontStyle Light
+  TitleFontSize 17
+}
+
+actor "End user\n(with a web browser)" as user #fff
+participant "smartKYC Main component" as main
+participant "smartKYC Processing component" as proc
+participant "smartKYC Exp component\nDow Jones Factiva Risk & Compliance connector" as djrc
+participant "smartKYC Media component\nDow Jones Factiva connector" as factivaconnector
+queue "JMS broker\n(IBM MQ)" as queue #fff
+database "RDBMS\n(PostgreSql)" as rdbms #fff
+database "Elasticsearch" as elasticsearch #fff
+participant "DJ Factiva API (Internet)" as factivaapi
+
+title
+smartKYC - High level search process
+<font color="DimGrey" size="12">(smartKYC R18.7.0)</font>
+endtitle
+
+
+user -> main: submit a client search\n(e.g., with Dow Jones Factiva R&C\nand Dow Jones Factiva Press)
+main -> user: review with ID N started
+main -> main: process and split the search into requests\nto send to data providers
+
+group 1. run the Dow Jones Factiva Press request
+    main -> queue: process the Dow Jones Factiva Press request
+    queue -> factivaconnector: Dow Jones Factiva Press request
+    factivaconnector-> factivaapi: perform actual search request on Dow Jones Factiva Press API\n(e.g., with adverse terms)
+    factivaapi -> factivaconnector: list of documents matching the search criteria
+    loop for each document returned by the Dow Jones Factiva Press API
+        factivaconnector -> queue: downloaded document
+        queue -> proc: downloaded document
+        proc -> proc: processing document\n (accept or reject)
+        proc -> queue: processed document
+        queue -> main: processed document
+        main -> rdbms: save processed document
+    end
+end
+
+group 2. run the Dow Jones Factiva Risk & Compliance request
+    main -> queue: process the Dow Jones Factiva Risk & Compliance request
+    queue -> djrc: Dow Jones Factiva Risk & Compliance request
+    djrc-> elasticsearch: perform actual search request on Dow Jones Factiva Press API\n(e.g., with adverse terms)
+    elasticsearch -> djrc: list of records matching the search criteria
+    loop for each record returned by Elasticsearch
+        djrc -> djrc: processing record\n (accept or reject)
+        djrc -> queue: processed record
+        queue -> main: processed record
+        main -> rdbms: save processed record
+    end
+end
+
+
+main -> main: search post-processing
+user -> main: request search status/results
+main -> user: results\n(status, documents, snippets, facts, etc.)
+
+
+
+@enduml

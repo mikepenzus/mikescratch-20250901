@@ -1,0 +1,94 @@
+@startuml
+
+skinparam dpi 600
+scale 1200*1800
+
+skinparam roundCorner 6
+skinparam shadowing false
+skinparam interface {
+  backgroundColor WhiteSmoke
+}
+skinparam actor {
+  FontName Open Sans Condensed Light
+  FontSize 14
+}
+skinparam arrow {
+  FontName Open Sans Condensed Light
+  FontSize 15
+}
+skinparam note {
+  FontName Open Sans Condensed Light
+  FontSize 13
+  BorderColor #bbb
+}
+skinparam footer {
+  FontName Open Sans Condensed Light
+  FontSize 14
+  FontColor DimGrey
+}
+skinparam sequence {
+  actorBorderThickness 1.6
+  participantBorderThickness 1.2
+  LifeLineBorderColor #ccc
+  ParticipantFontName Avenir Next Condensed
+  DividerBorderColor #eee
+  DividerBackgroundColor #fff
+  DividerFontName Open Sans Condensed Light
+  DividerFontSize 15
+  DividerFontStyle Light
+  TitleFontName Open Sans Condensed Light
+  TitleFontStyle Light
+  TitleFontSize 17
+}
+
+actor "User" as user #fff
+participant "sKYC Main Web UI" as ui
+participant "sKYC Main REST API" as api
+participant "sKYC Main Snapshot" as snapshot
+participant "sKYC Main Backrunner" as backrunner
+participant "IBM MQ" as mq #fff
+database "CouchDB" as couch #fff
+database "Oracle DB" as oracle #fff
+
+title
+smartKYC > Processing Flow: Call to action API
+<font color="DimGrey" size="12">(v. 2018-11-30)</font>
+endtitle
+
+=== Editing a review ==
+
+user -> ui: submit an edit request (POST)
+ui -> api: calls /action/... api
+activate api #BBBBFF
+api -> snapshot: review edit event
+snapshot -> couch: update database data (optional)
+snapshot -> oracle: update database data (optional)
+snapshot -> mq: search or backrunner event (optional)
+snapshot -> couch: save event for the audit
+snapshot --> api: event feedback
+api --> ui: api call ACK
+deactivate api
+ui --> user: update the view
+
+=== Backrunner event ==
+
+mq --> backrunner: get backrunner job message
+activate mq #FFBBBB
+ ... performing the job ...
+backrunner -> mq: job done event to snapshot
+backrunner -> mq: commit tx
+deactivate mq
+mq --> snapshot: get job done event
+activate mq #FFBBBB
+snapshot -> couch: update search status
+snapshot -> oracle: update review data
+snapshot -> mq: commit tx
+deactivate mq
+
+|||
+
+footer
+
+endfooter
+
+@endumlwho

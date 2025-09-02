@@ -1,0 +1,109 @@
+@startuml
+
+skinparam dpi 600
+scale 1200*1800
+
+skinparam roundCorner 6
+skinparam shadowing false
+skinparam interface {
+  backgroundColor WhiteSmoke
+}
+skinparam actor {
+  FontName Open Sans Condensed Light
+  FontSize 14
+}
+skinparam arrow {
+  FontName Open Sans Condensed Light
+  FontSize 15
+}
+skinparam note {
+  FontName Open Sans Condensed Light
+  FontSize 13
+  BorderColor #bbb
+}
+skinparam footer {
+  FontName Open Sans Condensed Light
+  FontSize 14
+  FontColor DimGrey
+}
+skinparam sequence {
+  actorBorderThickness 1.2
+  participantBorderThickness 1.2
+  LifeLineBorderColor #ccc
+  ParticipantFontName Avenir Next Condensed
+  DividerBorderColor #eee
+  DividerBackgroundColor #fff
+  DividerFontName Open Sans Condensed Light
+  DividerFontSize 15
+  DividerFontStyle Light
+  TitleFontName Open Sans Condensed Light
+  TitleFontStyle Light
+  TitleFontSize 17
+}
+
+actor "User" as user #fff
+participant "CLM" as CLM
+participant "Avaloq" as Avaloq
+
+participant "smartKYC" as smartKYC #fff
+participant "ELAS (archive)" as ELAS #fff
+
+
+
+title Processing Flow of a Client Search action
+
+
+== <b>Periodic refresh</b> ==
+
+CLM -> Avaloq: readPerson
+activate Avaloq
+return Person with "smartKYC" review ID
+
+CLM -> smartKYC: readSmartKYCReview - summary
+activate smartKYC
+return return metadata with status (appoved, R/O, cycle status)
+
+== Cycle was closed by CLM at the end of initial search ==
+
+CLM -> smartKYC: open new screening cycle
+activate smartKYC
+return confirmation
+
+CLM -> smartKYC: modify target data if necessary
+activate smartKYC
+return confirmation
+
+CLM -> smartKYC: modify screening cycle search profile to execute based on risk assessment if necessary
+activate smartKYC
+return confirmation
+
+CLM -> smartKYC: execute search according to search profile
+activate smartKYC
+smartKYC --> CLM: confirmation that search is in progress
+CLM -> smartKYC: polls summary change api until search is completed
+smartKYC --> CLM: confirmation that search is completed
+deactivate smartKYC
+
+CLM -> user: check and approve smartKYC search via iFrame integration
+activate user
+user --> CLM: smartKYC search is approved
+deactivate user
+
+CLM -> smartKYC: Async call to close cycle and generate "delta dossier"
+activate smartKYC
+smartKYC --> CLM: Job id
+CLM -> smartKYC: poll until job is completed and then download PDF.
+smartKYC --> CLM: save PDF.
+deactivate smartKYC
+
+CLM -> ELAS: After approval: Store the delta search dossier in ELAS (same as in onboarding)
+activate ELAS
+deactivate ELAS
+
+|||
+
+footer
+
+endfooter
+
+@endumlwho

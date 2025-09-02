@@ -1,0 +1,44 @@
+@startwbs
+<style>
+wbsDiagram {
+    FontName Roboto
+    FontSize 18
+  Linecolor black
+  arrow {
+    LineColor green
+  }
+  :depth(0) {
+    RoundCorner 20
+    BackgroundColor Lightgreen
+  }
+  :depth(1) {
+      BackgroundColor White
+      RoundCorner 10
+      LineColor red
+  }
+
+ .mexicoStyle * {
+     BackgroundColor Red
+     FontColor White
+     RoundCorner 10
+     FontName Times New Roman
+ }
+}
+</style>
+
+* World
+** America
+*** Canada
+*** Mexico <<mexicoStyle>>
+**** Chihuahua
+*** USA
+**** Texas
+***< New York
+** Europe
+***< England
+*** Germany
+*** Spain
+*** Italy
+**** Rome <<mexicoStyle>>
+
+@endwbs

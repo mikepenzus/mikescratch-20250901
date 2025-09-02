@@ -1,0 +1,106 @@
+@startuml
+
+skinparam dpi 600
+scale 1200*1800
+
+skinparam roundCorner 6
+skinparam shadowing false
+skinparam interface {
+  backgroundColor WhiteSmoke
+}
+skinparam actor {
+  FontName Open Sans Condensed Light
+  FontSize 14
+}
+skinparam arrow {
+  FontName Open Sans Condensed Light
+  FontSize 15
+}
+skinparam note {
+  FontName Open Sans Condensed Light
+  FontSize 13
+  BorderColor #bbb
+}
+skinparam footer {
+  FontName Open Sans Condensed Light
+  FontSize 14
+  FontColor DimGrey
+}
+skinparam sequence {
+  actorBorderThickness 1.2
+  participantBorderThickness 1.2
+  LifeLineBorderColor #ccc
+  ParticipantFontName Avenir Next Condensed
+  DividerBorderColor #eee
+  DividerBackgroundColor #fff
+  DividerFontName Open Sans Condensed Light
+  DividerFontSize 15
+  DividerFontStyle Light
+  TitleFontName Open Sans Condensed Light
+  TitleFontStyle Light
+  TitleFontSize 17
+}
+
+actor "User" as user #fff
+participant "sKyc Web UI" as ui
+participant "sKyc Main App" as main
+participant "sKyc REST Api" as api
+
+participant "ActiveMQ" as mq #fff
+participant "CouchDB" as couch #fff
+participant "Postgresql" as psql #fff
+participant "sKYC Exp Worker" as exp
+participant "World Check One Consumer" as wcoc #FAF8FF
+
+participant "Proxy" as proxy #fef
+participant "World Check One Api" as wcoa #fef
+
+
+
+
+title
+SmartKYC > Processing Flow of a Client Search action
+<font color="DimGrey" size="12">(v. R15.12.0)</font>
+endtitle
+
+
+== <b>Starting a search</b> ==
+
+user -> ui: submit a client search
+ui -> main: calls /action/reviews
+main -> main: split the request
+main -> couch: review meta information, scores, risks, \nsearched entity
+
+
+newpage
+
+== <b>World Check One</b> ==
+
+main -> mq: put message for Exp
+mq -> exp: get message
+exp -> wcoc: send query for World Check One
+wcoc -> proxy: Send query to\nWorld Check One Api \n.../cases/screeningRequest
+proxy -> wcoa: Forward the query to\nWorld Check One Api
+wcoa -> proxy: Response from\nWorld Check One Api
+proxy -> wcoc: Forward the response\nfrom World Check One Api
+wcoc -> wcoc: sorting and\nscoring the matches
+
+wcoc -> proxy: Send query for details for\neach of highest scoring matches\n.../reference/profile/<entityId>
+proxy -> wcoa: Forward the query to\nWorld Check One Api
+wcoa -> proxy: Response from\nWorld Check One Api
+proxy -> wcoc: Forward the response\nfrom World Check One Api
+wcoc -> wcoc: Filtering and\n re-scoring the matches
+
+wcoc -> mq: put message for Exp\n(search results)
+main -> mq: get message (results)
+main -> psql: store the results
+main -> couch: update search status (close a task)
+main -> ui: update search status
+
+|||
+
+footer
+
+endfooter
+
+@endumlwho

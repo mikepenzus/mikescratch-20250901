@@ -1,0 +1,92 @@
+@startuml
+Links are colored in gray
+
+<style>
+
+ganttDiagram {
+    task {
+        FontName Roboto
+        FontColor White
+        FontSize 16
+        BackGroundColor #2292d0
+        LineColor #2292d0
+    }
+    milestone {
+        FontName Roboto
+        FontColor black
+        FontSize 12
+        ' FontStyle italic
+        FontStyle bold
+        BackGroundColor #2292d0
+        LineColor #2292d0
+    }
+    note {
+        FontName Roboto
+        FontColor black
+        FontSize 12
+        ' FontStyle italic
+        BackGroundColor #EDEDED
+        LineColor white
+    }
+}
+
+</style>
+
+scale 1
+printscale weekly
+Project starts 2020-11-1
+
+[= LGT] starts 2020-11-1 and ends 2021-06-30
+note bottom
+    <img:https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/LGT_Logo.svg/120px-LGT_Logo.svg.png>
+
+    * JMS issue (R18.2.3.3.1)
+    * AML assessment
+    * Continuous monitoring
+    * CLM integration (R18.2.3.3.2)
+end note
+[Release 18.2.3.3.1] happens 2021-01-04
+[Workshop cont. monitoring] happens 2021-01-13
+[Release 18.2.3.3.2] happens 2021-01-15
+
+[= OCBC] starts 2020-11-1 and ends 2021-06-30
+note bottom
+    <img:https://upload.wikimedia.org/wikipedia/en/thumb/1/14/OCBC_Bank_Logo.svg/150px-OCBC_Bank_Logo.svg.png>
+
+    * Roll-out of 16.7.x in production
+    * Migration to 18.x
+end note
+[Release 16.7.1] happens 2020-12-23 and is colored in green
+[Release 16.7.2?] happens 2020-12-30
+[Migration OCBC to 18.x?] happens 2021-01-31
+
+[= Bank of Singapore] starts 2020-11-1 and ends 2021-06-30
+note bottom
+    <img:https://upload.wikimedia.org/wikipedia/en/thumb/4/41/Bank_of_Singapore_Logo.svg/150px-Bank_of_Singapore_Logo.svg.png>
+
+    * Slow dossier creation for big docs
+    * Crash because of dossier creation
+end note
+[Migration BoS to 18.x?] happens 2021-02-28
+
+[= Banco Itaú] starts 2020-11-1 and ends 2021-06-30
+note bottom
+    <img:https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Banco_Ita%C3%BA_logo.svg/80px-Banco_Ita%C3%BA_logo.svg.png>
+
+    * Scoring improvements
+    * Project renewal
+end note
+[Scoring improvement R11.18.5] happens 2020-12-22
+[Scoring improvement R11.18.6 ???] happens 2021-1-22
+
+[= Delivery] starts 2020-11-1 and ends 2021-06-30
+note bottom
+    <img:https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Banco_Ita%C3%BA_logo.svg/80px-Banco_Ita%C3%BA_logo.svg.png>
+
+    * Improve tests for record providers
+    * Improve tests for scraping providers
+    *
+end note
+
+
+@enduml
